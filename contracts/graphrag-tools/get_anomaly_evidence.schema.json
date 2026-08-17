@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hpe:graphrag:tool:get_anomaly_evidence:1.0.0",
+  "title": "get_anomaly_evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pattern_ids_json"],
+  "properties": {
+    "pattern_ids_json": {"type": "string", "minLength": 68, "maxLength": 8192}
+  }
+}

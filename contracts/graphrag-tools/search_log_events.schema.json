@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hpe:graphrag:tool:search_log_events:1.0.0",
+  "title": "search_log_events",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["query"],
+  "properties": {
+    "query": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "mode": {"type": "string", "enum": ["lexical", "vector", "hybrid"], "default": "hybrid"},
+    "top_k": {"type": "string", "pattern": "^(?:[1-9]|1[0-9]|20)$", "default": "8"}
+  }
+}

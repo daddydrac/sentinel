@@ -1,0 +1,153 @@
+{
+  "schema_version": "1.0",
+  "owner": "HPE GreenLake agentic remediation demo",
+  "tools": [
+    {
+      "name": "search_exact_errors",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["bedrock-agent-bridge", "workflow-worker"],
+      "timeout_seconds": 25,
+      "input_fields": ["scenario_id"]
+    },
+    {
+      "name": "find_similar_incidents",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["bedrock-agent-bridge", "workflow-worker"],
+      "timeout_seconds": 25,
+      "input_fields": ["scenario_id"]
+    },
+    {
+      "name": "inspect_dependency_graph",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["bedrock-agent-bridge", "workflow-worker"],
+      "timeout_seconds": 25,
+      "input_fields": ["scenario_id"]
+    },
+    {
+      "name": "get_live_state",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["bedrock-agent-bridge", "workflow-worker"],
+      "timeout_seconds": 25,
+      "input_fields": ["scenario_id"]
+    },
+    {
+      "name": "retrieve_hybrid_context",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["bedrock-agent-bridge", "workflow-worker"],
+      "timeout_seconds": 25,
+      "input_fields": ["scenario_id"]
+    },
+    {
+      "name": "search_log_events",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["chat-worker-after-exact-approval"],
+      "timeout_seconds": 25,
+      "input_fields": ["query", "mode", "top_k"]
+    },
+    {
+      "name": "query_hdfs_graph",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["chat-worker-after-exact-approval"],
+      "timeout_seconds": 25,
+      "input_fields": ["pattern_ids_json", "max_hops"]
+    },
+    {
+      "name": "get_anomaly_evidence",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["chat-worker-after-exact-approval"],
+      "timeout_seconds": 25,
+      "input_fields": ["pattern_ids_json"]
+    },
+    {
+      "name": "correlate_block_failures",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["chat-worker-after-exact-approval"],
+      "timeout_seconds": 25,
+      "input_fields": ["block_ids_json", "top_k"]
+    },
+    {
+      "name": "analyze_node_behavior",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["chat-worker-after-exact-approval"],
+      "timeout_seconds": 25,
+      "input_fields": ["block_ids_json"]
+    },
+    {
+      "name": "rank_anomalies",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["chat-worker-after-exact-approval", "pipeline-publication-gate"],
+      "timeout_seconds": 25,
+      "input_fields": ["query", "top_k"]
+    },
+    {
+      "name": "generate_remediation_plan",
+      "version": "1.0.0",
+      "class": "read_only",
+      "risk": "low",
+      "callers": ["chat-worker-after-exact-approval"],
+      "timeout_seconds": 25,
+      "input_fields": ["pattern_ids_json"]
+    },
+    {
+      "name": "validate_remediation",
+      "version": "1.0.0",
+      "class": "read_only_verifier",
+      "risk": "low",
+      "callers": ["chat-worker-after-exact-approval"],
+      "timeout_seconds": 25,
+      "input_fields": ["pattern_ids_json", "original_evidence_hash"]
+    },
+    {
+      "name": "execute_remediation",
+      "version": "1.0.0",
+      "class": "reversible_write",
+      "risk": "medium",
+      "callers": ["workflow-worker"],
+      "approval": "deterministic_policy_and_exact_plan_hash",
+      "idempotency": "workflow_id_plus_plan_hash",
+      "timeout_seconds": 25,
+      "input_fields": ["scenario_id", "workflow_id", "plan_json", "policy_json", "approval_json"]
+    },
+    {
+      "name": "verify_remediation",
+      "version": "1.0.0",
+      "class": "read_only_verifier",
+      "risk": "low",
+      "callers": ["workflow-worker"],
+      "timeout_seconds": 25,
+      "input_fields": ["scenario_id", "receipt_json"]
+    },
+    {
+      "name": "compensate_remediation",
+      "version": "1.0.0",
+      "class": "reversible_write",
+      "risk": "medium",
+      "callers": ["workflow-worker"],
+      "approval": "original_exact_plan_authority",
+      "timeout_seconds": 25,
+      "input_fields": ["scenario_id", "workflow_id", "plan_json", "policy_json", "approval_json"]
+    }
+  ]
+}

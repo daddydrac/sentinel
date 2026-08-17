@@ -1,0 +1,4 @@
+# Copy this file outside source control, then pass it to make add-users FILE=...
+email,groups
+primary.admin@example.com,admin
+oncall.approver@example.com,approver

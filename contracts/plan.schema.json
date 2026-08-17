@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/hpe-agentic-remediation/plan.schema.json",
+  "title": "Evidence-bound remediation plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "planner_mode",
+    "hypothesis",
+    "tool",
+    "target",
+    "arguments",
+    "risk",
+    "expected_outcome",
+    "rollback",
+    "verification",
+    "evidence_ids",
+    "evidence_manifest_hash",
+    "assumptions",
+    "expires_in_seconds",
+    "plan_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "planner_mode": {"type": "string", "maxLength": 100},
+    "hypothesis": {"type": "string", "maxLength": 2000},
+    "tool": {"type": "string", "maxLength": 100},
+    "target": {"type": "string", "maxLength": 200},
+    "arguments": {"type": "object", "maxProperties": 20},
+    "risk": {"enum": ["read_only", "low", "medium", "high"]},
+    "expected_outcome": {"type": "string", "maxLength": 2000},
+    "rollback": {"type": "string", "maxLength": 200},
+    "verification": {"type": "object"},
+    "evidence_ids": {"type": "array", "maxItems": 100, "items": {"type": "string"}},
+    "evidence_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "assumptions": {"type": "array", "maxItems": 20, "items": {"type": "string"}},
+    "expires_in_seconds": {"type": "integer", "minimum": 1, "maximum": 900},
+    "agent_analysis": {"type": "string", "maxLength": 4000},
+    "agent_tool_calls": {"type": "array", "maxItems": 5, "items": {"type": "string"}},
+    "plan_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

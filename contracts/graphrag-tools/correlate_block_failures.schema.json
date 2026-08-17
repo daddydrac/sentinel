@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hpe:graphrag:tool:correlate_block_failures:1.0.0",
+  "title": "correlate_block_failures",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["block_ids_json"],
+  "properties": {
+    "block_ids_json": {"type": "string", "minLength": 3, "maxLength": 8192},
+    "top_k": {"type": "string", "pattern": "^(?:[1-9]|1[0-9]|20)$", "default": "20"}
+  }
+}

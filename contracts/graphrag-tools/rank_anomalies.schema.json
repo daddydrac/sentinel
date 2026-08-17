@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hpe:graphrag:tool:rank_anomalies:1.0.0",
+  "title": "rank_anomalies",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["query"],
+  "properties": {
+    "query": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "top_k": {"type": "string", "const": "3", "default": "3"}
+  }
+}

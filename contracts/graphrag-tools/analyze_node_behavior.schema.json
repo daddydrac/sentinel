@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hpe:graphrag:tool:analyze_node_behavior:1.0.0",
+  "title": "analyze_node_behavior",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["block_ids_json"],
+  "properties": {
+    "block_ids_json": {"type": "string", "minLength": 3, "maxLength": 8192}
+  }
+}

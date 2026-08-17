@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hpe:graphrag:tool:generate_remediation_plan:1.0.0",
+  "title": "generate_remediation_plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pattern_ids_json"],
+  "properties": {
+    "pattern_ids_json": {"type": "string", "minLength": 68, "maxLength": 8192}
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hpe:graphrag:tool:validate_remediation:1.0.0",
+  "title": "validate_remediation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pattern_ids_json", "original_evidence_hash"],
+  "properties": {
+    "pattern_ids_json": {"type": "string", "minLength": 68, "maxLength": 8192},
+    "original_evidence_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
