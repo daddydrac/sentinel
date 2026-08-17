@@ -1,0 +1,16 @@
+aws_region  = "us-east-1"
+environment = "demo"
+
+# Bedrock Agent and AgentCore MCP Gateway are mandatory.
+# This default uses Amazon Nova Lite; change it only to a model supported by Bedrock Agents in your Region.
+bedrock_model_id  = "amazon.nova-lite-v1:0"
+bedrock_model_arn = ""
+
+# Provisions an idle, auto-stopping EMR Serverless application. Terraform does not start the 100 GiB jobs.
+enable_hpc_analytics = true
+
+tags = {
+  Owner      = "Joe-Hoeller"
+  CostCenter = "Agentic-Remediation-Demo"
+  Expires    = "2026-08-17"
+}

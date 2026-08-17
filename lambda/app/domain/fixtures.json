@@ -1,0 +1,221 @@
+{
+  "scenarios": [
+    {
+      "id": "storage_path_regression",
+      "title": "Storage path regression after firmware change",
+      "severity": "SEV-2",
+      "summary": "A synthetic hybrid-cloud cluster shows repeated storage-path resets and elevated application latency after a firmware rollout.",
+      "query": "storage path reset node-042 firmware 4.8.17 checkout latency",
+      "affected_node": "node-042",
+      "logs": [
+        {
+          "id": "log-bgl-001",
+          "type": "log",
+          "text": "node-042 kernel storage path reset detected on adapter 2 after firmware 4.8.17",
+          "source": "HF BGL-derived demo fixture",
+          "trust": "benchmark"
+        },
+        {
+          "id": "log-bgl-002",
+          "type": "log",
+          "text": "node-042 multipath queue retry threshold exceeded; latency 920 ms",
+          "source": "HF BGL-derived demo fixture",
+          "trust": "benchmark"
+        },
+        {
+          "id": "log-bgl-003",
+          "type": "log",
+          "text": "node-017 informational health check completed with no path errors",
+          "source": "HF BGL-derived demo fixture",
+          "trust": "benchmark"
+        }
+      ],
+      "incidents": [
+        {
+          "id": "incident-oncall-014",
+          "type": "incident",
+          "text": "A firmware rollout caused intermittent storage path resets. Draining one affected node stopped retries while the prior firmware was restored.",
+          "source": "MIT on-call incident-derived demo fixture",
+          "trust": "reviewed-synthetic"
+        },
+        {
+          "id": "incident-oncall-022",
+          "type": "incident",
+          "text": "Database latency increased after an unindexed query; remediation required a query plan change, not a node restart.",
+          "source": "MIT on-call incident-derived demo fixture",
+          "trust": "reviewed-synthetic"
+        }
+      ],
+      "runbooks": [
+        {
+          "id": "runbook-storage-drain-v3",
+          "type": "runbook",
+          "text": "For a single degraded storage path: verify replica health, dry-run node drain, drain one node, observe path reset rate for five minutes, then restore or roll back.",
+          "source": "Demo runbook v3",
+          "trust": "approved"
+        }
+      ],
+      "graph_edges": [
+        ["node-042", "HOSTS", "checkout-api-7"],
+        ["checkout-api-7", "DEPENDS_ON", "orders-db"],
+        ["orders-db", "USES", "storage-pool-a"],
+        ["checkout-api-7", "OWNED_BY", "commerce-sre"],
+        ["storage-pool-a", "RESTRICTED_BY", "policy-change-window"]
+      ],
+      "live_state": [
+        {"id": "live-001", "key": "node-042.path_reset_rate", "value": "18/min", "freshness_seconds": 8},
+        {"id": "live-002", "key": "node-042.firmware", "value": "4.8.17", "freshness_seconds": 12},
+        {"id": "live-003", "key": "checkout-api-7.p95_latency", "value": "920ms", "freshness_seconds": 6},
+        {"id": "live-004", "key": "replica_headroom", "value": "37%", "freshness_seconds": 10}
+      ],
+      "proposed_action": {
+        "tool": "drain_node",
+        "target": "node-042",
+        "arguments": {"mode": "canary", "max_workloads": 1},
+        "risk": "medium",
+        "expected_outcome": "Path resets fall below 2/min and checkout latency falls below 300ms.",
+        "rollback": "uncordon_node"
+      },
+      "verification_should_pass": true,
+      "verification": {
+        "before": {"path_reset_rate": "18/min", "p95_latency": "920ms"},
+        "after": {"path_reset_rate": "1/min", "p95_latency": "240ms"},
+        "window": "5 minutes simulated"
+      }
+    },
+    {
+      "id": "firmware_drift_diagnosis",
+      "title": "Firmware drift with no safe automatic action",
+      "severity": "SEV-3",
+      "summary": "Two hosts report parity warnings, but inventory sources disagree about their firmware state. The correct behavior is to abstain and open an investigation.",
+      "query": "parity warning firmware inventory conflict nodes 077 081",
+      "affected_node": "node-077",
+      "logs": [
+        {
+          "id": "log-bgl-101",
+          "type": "log",
+          "text": "node-077 corrected memory parity warning after maintenance restart",
+          "source": "HF BGL-derived demo fixture",
+          "trust": "benchmark"
+        },
+        {
+          "id": "log-bgl-102",
+          "type": "log",
+          "text": "node-081 firmware inventory agent reported version unknown",
+          "source": "HF BGL-derived demo fixture",
+          "trust": "benchmark"
+        }
+      ],
+      "incidents": [
+        {
+          "id": "incident-oncall-110",
+          "type": "incident",
+          "text": "When inventory sources disagree, operators must refresh authoritative inventory before changing firmware or draining capacity.",
+          "source": "MIT on-call incident-derived demo fixture",
+          "trust": "reviewed-synthetic"
+        }
+      ],
+      "runbooks": [
+        {
+          "id": "runbook-inventory-conflict-v1",
+          "type": "runbook",
+          "text": "Do not remediate firmware from stale inventory. Open an investigation, refresh the hardware inventory source, and require owner confirmation.",
+          "source": "Demo runbook v1",
+          "trust": "approved"
+        }
+      ],
+      "graph_edges": [
+        ["node-077", "MEMBER_OF", "analytics-cluster"],
+        ["analytics-cluster", "OWNED_BY", "data-platform-sre"],
+        ["node-077", "REPORTED_BY", "inventory-source-a"],
+        ["node-077", "REPORTED_BY", "inventory-source-b"]
+      ],
+      "live_state": [
+        {"id": "live-101", "key": "inventory-source-a.node-077", "value": "4.7.9", "freshness_seconds": 3200},
+        {"id": "live-102", "key": "inventory-source-b.node-077", "value": "4.8.17", "freshness_seconds": 18},
+        {"id": "live-103", "key": "node-077.parity_warning_rate", "value": "1/hour", "freshness_seconds": 9}
+      ],
+      "proposed_action": {
+        "tool": "open_investigation",
+        "target": "node-077",
+        "arguments": {"owner": "data-platform-sre", "reason": "authoritative inventory conflict"},
+        "risk": "read_only",
+        "expected_outcome": "Create an evidence-bound investigation without changing infrastructure.",
+        "rollback": "none"
+      },
+      "verification_should_pass": true,
+      "verification": {
+        "before": {"investigation": "absent"},
+        "after": {"investigation": "opened"},
+        "window": "immediate"
+      }
+    },
+    {
+      "id": "verification_failure",
+      "title": "Approved restart fails verification and compensates",
+      "severity": "SEV-2",
+      "summary": "A workload restart is approved, but the independent health check remains red, forcing compensation and escalation.",
+      "query": "payments worker memory pressure restart health check remains red",
+      "affected_node": "payments-worker-3",
+      "logs": [
+        {
+          "id": "log-app-201",
+          "type": "log",
+          "text": "payments-worker-3 memory pressure 94 percent and queue age 190 seconds",
+          "source": "Synthetic application log",
+          "trust": "benchmark"
+        },
+        {
+          "id": "log-app-202",
+          "type": "log",
+          "text": "payments-worker-3 restart accepted but downstream health probe remains red",
+          "source": "Synthetic application log",
+          "trust": "benchmark"
+        }
+      ],
+      "incidents": [
+        {
+          "id": "incident-oncall-210",
+          "type": "incident",
+          "text": "A restart acknowledged by the platform did not restore service because a downstream dependency remained unhealthy. Verification prevented repeated restarts.",
+          "source": "MIT on-call incident-derived demo fixture",
+          "trust": "reviewed-synthetic"
+        }
+      ],
+      "runbooks": [
+        {
+          "id": "runbook-worker-restart-v2",
+          "type": "runbook",
+          "text": "Restart one worker only after checking queue redundancy. Verify queue age and downstream probe. If either remains unhealthy, restore the previous replica and escalate.",
+          "source": "Demo runbook v2",
+          "trust": "approved"
+        }
+      ],
+      "graph_edges": [
+        ["payments-worker-3", "CONSUMES", "payments-queue"],
+        ["payments-worker-3", "DEPENDS_ON", "token-service"],
+        ["token-service", "REPORTS", "health-red"],
+        ["payments-worker-3", "OWNED_BY", "payments-sre"]
+      ],
+      "live_state": [
+        {"id": "live-201", "key": "payments-worker-3.memory", "value": "94%", "freshness_seconds": 4},
+        {"id": "live-202", "key": "payments-queue.oldest_age", "value": "190s", "freshness_seconds": 5},
+        {"id": "live-203", "key": "token-service.health", "value": "red", "freshness_seconds": 3}
+      ],
+      "proposed_action": {
+        "tool": "restart_workload",
+        "target": "payments-worker-3",
+        "arguments": {"replicas": 1, "timeout_seconds": 60},
+        "risk": "medium",
+        "expected_outcome": "Queue age falls below 30 seconds and all dependency probes become green.",
+        "rollback": "restore_previous_replica"
+      },
+      "verification_should_pass": false,
+      "verification": {
+        "before": {"queue_age": "190s", "token_service": "red"},
+        "after": {"queue_age": "175s", "token_service": "red"},
+        "window": "5 minutes simulated"
+      }
+    }
+  ]
+}

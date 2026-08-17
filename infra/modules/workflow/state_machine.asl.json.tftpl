@@ -1,0 +1,115 @@
+{
+  "Comment": "Bounded agentic remediation: retrieve, plan, policy, approval, execute, verify, compensate",
+  "StartAt": "Intake",
+  "States": {
+    "Intake": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "intake", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "Retry": [{"ErrorEquals": ["Lambda.ServiceException", "Lambda.TooManyRequestsException"], "IntervalSeconds": 1, "MaxAttempts": 2, "BackoffRate": 2}],
+      "Catch": [{"ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "FailClosed"}],
+      "Next": "Retrieve"
+    },
+    "Retrieve": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "retrieve", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "Retry": [{"ErrorEquals": ["Lambda.ServiceException", "Lambda.TooManyRequestsException"], "IntervalSeconds": 1, "MaxAttempts": 2, "BackoffRate": 2}],
+      "Catch": [{"ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "FailClosed"}],
+      "Next": "Plan"
+    },
+    "Plan": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "plan", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "Retry": [{"ErrorEquals": ["Lambda.ServiceException", "Lambda.TooManyRequestsException"], "IntervalSeconds": 1, "MaxAttempts": 2, "BackoffRate": 2}],
+      "Catch": [{"ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "FailClosed"}],
+      "Next": "Policy"
+    },
+    "Policy": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "policy", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "Catch": [{"ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "FailClosed"}],
+      "Next": "PolicyDecision"
+    },
+    "PolicyDecision": {
+      "Type": "Choice",
+      "Choices": [
+        {"Variable": "$.policy.decision", "StringEquals": "DENY", "Next": "Deny"},
+        {"Variable": "$.policy.decision", "StringEquals": "REQUIRE_APPROVAL", "Next": "WaitForApproval"}
+      ],
+      "Default": "Execute"
+    },
+    "WaitForApproval": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${worker_arn}",
+        "Payload": {"op": "wait_approval", "input.$": "$", "task_token.$": "$$.Task.Token"}
+      },
+      "ResultPath": "$.approval",
+      "TimeoutSeconds": 900,
+      "Catch": [{"ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "FailClosed"}],
+      "Next": "ApprovalDecision"
+    },
+    "ApprovalDecision": {
+      "Type": "Choice",
+      "Choices": [{"Variable": "$.approval.approved", "BooleanEquals": true, "Next": "Execute"}],
+      "Default": "Deny"
+    },
+    "Execute": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "execute", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "Catch": [{"ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "FailClosed"}],
+      "Next": "Verify"
+    },
+    "Verify": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "verify", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "Catch": [{"ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "FailClosed"}],
+      "Next": "VerificationDecision"
+    },
+    "VerificationDecision": {
+      "Type": "Choice",
+      "Choices": [{"Variable": "$.verification.passed", "BooleanEquals": true, "Next": "Complete"}],
+      "Default": "Compensate"
+    },
+    "Compensate": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "compensate", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "End": true
+    },
+    "Complete": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "complete", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "End": true
+    },
+    "Deny": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "deny", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "End": true
+    },
+    "FailClosed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {"FunctionName": "${worker_arn}", "Payload": {"op": "fail", "input.$": "$"}},
+      "OutputPath": "$.Payload",
+      "End": true
+    }
+  }
+}

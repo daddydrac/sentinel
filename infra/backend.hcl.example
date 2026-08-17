@@ -1,0 +1,6 @@
+bucket       = "REPLACE_WITH_BOOTSTRAP_OUTPUT"
+key          = "hpe-agentic-remediation/demo.tfstate"
+region       = "us-east-1"
+encrypt      = true
+kms_key_id   = "REPLACE_WITH_BOOTSTRAP_OUTPUT"
+use_lockfile = true

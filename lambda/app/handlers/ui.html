@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HPE GreenLake Agentic Remediation Demo</title>
+  <style>
+    :root {
+      --bg: #0a0f12;
+      --panel: #11191d;
+      --panel-2: #172226;
+      --text: #f4f8f7;
+      --muted: #9fb0ae;
+      --green: #01e6a5;
+      --blue: #49b9ff;
+      --purple: #9e78ff;
+      --orange: #ff9f43;
+      --red: #ff5e72;
+      --line: rgba(255,255,255,.09);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% -10%, rgba(1,230,165,.17), transparent 32%),
+        radial-gradient(circle at 90% 8%, rgba(73,185,255,.13), transparent 26%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header, main { width: min(1440px, calc(100% - 40px)); margin: 0 auto; }
+    header { padding: 34px 0 24px; display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+    .eyebrow { color: var(--green); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; font-weight: 800; }
+    h1 { font-size: clamp(30px, 5vw, 62px); line-height: .98; letter-spacing: -.045em; margin: 12px 0; max-width: 900px; }
+    header p { color: var(--muted); max-width: 780px; line-height: 1.55; margin: 0; }
+    .badge { border: 1px solid rgba(1,230,165,.35); background: rgba(1,230,165,.08); color: var(--green); padding: 9px 12px; border-radius: 999px; white-space: nowrap; font-size: 12px; }
+    .layout { display: grid; grid-template-columns: 360px 1fr; gap: 18px; padding-bottom: 50px; }
+    .panel { background: linear-gradient(180deg, rgba(23,34,38,.95), rgba(13,20,23,.96)); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
+    .panel-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .panel-head h2 { font-size: 15px; margin: 0; letter-spacing: .01em; }
+    .panel-body { padding: 18px 20px; }
+    .scenario { padding: 15px; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: .18s ease; background: rgba(255,255,255,.015); }
+    .scenario:hover, .scenario.active { border-color: rgba(1,230,165,.55); transform: translateY(-1px); background: rgba(1,230,165,.055); }
+    .scenario h3 { margin: 8px 0 7px; font-size: 15px; }
+    .scenario p { color: var(--muted); font-size: 12px; line-height: 1.45; margin: 0; }
+    .severity { font-size: 10px; letter-spacing: .12em; color: var(--orange); font-weight: 800; }
+    button { border: 0; border-radius: 11px; font-weight: 800; padding: 11px 14px; cursor: pointer; background: var(--green); color: #00271c; transition: .18s ease; }
+    button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
+    button.danger { background: rgba(255,94,114,.12); color: #ff9baa; border: 1px solid rgba(255,94,114,.3); }
+    .primary-wide { width: 100%; margin-top: 8px; }
+    .placeholder { min-height: 610px; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 40px; }
+    .placeholder strong { color: var(--text); display: block; font-size: 22px; margin-bottom: 8px; }
+    .workflow { display: none; }
+    .workflow.show { display: block; }
+    .run-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .status { padding: 7px 10px; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: .06em; color: var(--blue); background: rgba(73,185,255,.1); border: 1px solid rgba(73,185,255,.25); }
+    .status.VERIFIED { color: var(--green); background: rgba(1,230,165,.1); border-color: rgba(1,230,165,.28); }
+    .status.COMPENSATED, .status.DENIED, .status.FAILED { color: var(--red); background: rgba(255,94,114,.1); border-color: rgba(255,94,114,.28); }
+    .flow { display: grid; grid-template-columns: repeat(7, minmax(94px, 1fr)); gap: 8px; padding: 18px 20px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+    .flow-step { min-width: 94px; padding: 12px 10px; border: 1px solid var(--line); color: #6f817f; border-radius: 10px; font-size: 10px; text-align: center; font-weight: 900; letter-spacing: .06em; }
+    .flow-step.done { color: var(--green); border-color: rgba(1,230,165,.3); background: rgba(1,230,165,.06); }
+    .flow-step.current { color: var(--text); border-color: var(--blue); box-shadow: 0 0 0 1px rgba(73,185,255,.22) inset; }
+    .content-grid { display: grid; grid-template-columns: 1.3fr .9fr; gap: 14px; padding: 14px; }
+    .stack { display: grid; gap: 14px; align-content: start; }
+    .card { border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.018); overflow: hidden; }
+    .card h3 { padding: 14px 16px; margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; border-bottom: 1px solid var(--line); color: var(--muted); }
+    .card-content { padding: 15px 16px; }
+    .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .evidence { padding: 11px; border-radius: 10px; background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.06); }
+    .evidence .kind { color: var(--blue); font-size: 9px; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
+    .evidence p { font-size: 12px; line-height: 1.45; margin: 7px 0; }
+    .evidence small { color: var(--muted); font-size: 10px; }
+    .live-row, .trace-row { display: grid; grid-template-columns: 1fr auto; gap: 14px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.055); font-size: 12px; }
+    .live-row:last-child, .trace-row:last-child { border-bottom: 0; }
+    .live-row span:last-child { color: var(--green); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .trace-row { grid-template-columns: 98px 1fr; }
+    .trace-row strong { color: var(--purple); font-size: 10px; letter-spacing: .06em; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; color: #d8e5e3; font-size: 11px; line-height: 1.5; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .hash { color: var(--orange); word-break: break-all; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; margin-top: 12px; }
+    .decision { display: flex; gap: 9px; margin-top: 14px; }
+    .decision button { flex: 1; }
+    .callout { border-left: 3px solid var(--orange); padding: 10px 12px; background: rgba(255,159,67,.06); color: #ffd9b5; font-size: 12px; line-height: 1.45; border-radius: 0 8px 8px 0; }
+    .token-box { max-width: 420px; }
+    .token-box input { width: 100%; border: 1px solid var(--line); background: #0a1114; color: white; padding: 12px; border-radius: 10px; margin: 12px 0; }
+    .footer-note { color: #70817f; font-size: 10px; line-height: 1.5; margin-top: 14px; }
+    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .content-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 620px) { header, main { width: min(100% - 22px, 1440px); } header { flex-direction: column; } .evidence-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="eyebrow">Bounded autonomous operations</div>
+      <h1>Agentic remediation, with production boundaries.</h1>
+      <p>An Amazon Bedrock Agent autonomously selects read tools through an IAM-authenticated AgentCore MCP Gateway. Hybrid evidence grounds a proposed action; deterministic policy, immutable approval, receipted execution, independent verification, and compensation retain the production boundary.</p>
+    </div>
+    <div class="badge">Reference demo · not an HPE product</div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel">
+      <div class="panel-head"><h2>Incident scenarios</h2><span class="status" id="connection">CONNECTING</span></div>
+      <div class="panel-body">
+        <div id="scenario-list"></div>
+        <button id="start" class="primary-wide" disabled>Start bounded workflow</button>
+        <div class="footer-note">All infrastructure actions are simulated. The AWS deployment includes Bedrock Agent, AgentCore MCP, the guarded control plane, evidence storage, workflow state, EMR Serverless application, and logs.</div>
+      </div>
+    </aside>
+
+    <section class="panel">
+      <div id="placeholder" class="placeholder">
+        <div><strong>Select a scenario.</strong>Then run the same left-to-right story used in the HPE GreenLake engineering plan.</div>
+      </div>
+      <div id="workflow" class="workflow">
+        <div class="panel-head">
+          <div><h2 id="run-title">Workflow</h2><div id="workflow-id" class="hash"></div></div>
+          <div class="run-meta"><span class="status" id="run-status">QUEUED</span></div>
+        </div>
+        <div id="flow" class="flow"></div>
+        <div class="content-grid">
+          <div class="stack">
+            <div class="card"><h3>Hybrid evidence packet</h3><div id="evidence" class="card-content"><div class="callout">Waiting for retrieval branches…</div></div></div>
+            <div class="card"><h3>Plan and deterministic policy</h3><div id="plan" class="card-content"><div class="callout">Waiting for a grounded plan…</div></div></div>
+          </div>
+          <div class="stack">
+            <div class="card"><h3>Why Hybrid RAG</h3><div class="card-content">
+              <div class="evidence"><div class="kind">Vector RAG</div><p>Finds semantically similar incidents and runbooks, but is weak on exact identifiers and causal paths.</p></div>
+              <div style="height:8px"></div>
+              <div class="evidence"><div class="kind">Graph RAG</div><p>Exposes dependencies, ownership, policy, and blast radius, but requires governed entities and fresh edges.</p></div>
+              <div style="height:8px"></div>
+              <div class="evidence"><div class="kind">Hybrid RAG</div><p>Fuses exact terms, semantic similarity, graph consequences, and current state for an actionable evidence packet.</p></div>
+            </div></div>
+            <div class="card"><h3>Guardrail enforcement</h3><div class="card-content">
+              <div class="live-row"><span>Agent tool boundary</span><span>READ-ONLY MCP</span></div>
+              <div class="live-row"><span>Gateway authentication</span><span>AWS IAM</span></div>
+              <div class="live-row"><span>Bedrock input/output</span><span>GUARDRAIL</span></div>
+              <div class="live-row"><span>Tenant filter</span><span>demo-tenant</span></div>
+              <div class="live-row"><span>Evidence provenance</span><span>REQUIRED</span></div>
+              <div class="live-row"><span>Schema-valid plan</span><span>REQUIRED</span></div>
+              <div class="live-row"><span>Plan-bound approval</span><span>ENFORCED</span></div>
+              <div class="live-row"><span>Idempotency + canary</span><span>ENFORCED</span></div>
+              <div class="live-row"><span>Independent verification</span><span>ENFORCED</span></div>
+            </div></div>
+            <div class="card"><h3>Live state</h3><div id="live" class="card-content"><div class="callout">Waiting for authoritative state…</div></div></div>
+            <div class="card"><h3>Execution and verification</h3><div id="outcome" class="card-content"><div class="callout">No tool call has executed.</div></div></div>
+            <div class="card"><h3>Auditable trace</h3><div id="trace" class="card-content"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="token-dialog" class="panel token-box">
+    <div class="panel-body">
+      <h2>Enter the demo token</h2>
+      <p style="color:var(--muted);font-size:13px">Use the sensitive Terraform output named <code>demo_token</code>.</p>
+      <input id="token-input" type="password" autocomplete="off" placeholder="Demo token">
+      <button id="save-token" class="primary-wide">Continue</button>
+    </div>
+  </dialog>
+
+  <script>
+    const flowSteps = ['INTAKE','RETRIEVE','PLAN','POLICY','APPROVAL','EXECUTE','VERIFY','COMPENSATE','COMPLETE'];
+    let token = new URLSearchParams(location.search).get('token') || sessionStorage.getItem('demo-token') || '';
+    let scenarios = [];
+    let selected = null;
+    let currentWorkflow = null;
+    let polling = null;
+    if (token) { sessionStorage.setItem('demo-token', token); history.replaceState({}, '', location.pathname); }
+
+    const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    const api = async (path, options={}) => {
+      const response = await fetch(path, { ...options, headers: {'content-type':'application/json','x-demo-token':token,...(options.headers||{})} });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+      return body;
+    };
+
+    async function loadScenarios() {
+      if (!token) { document.getElementById('token-dialog').showModal(); return; }
+      try {
+        const payload = await api('/api/scenarios');
+        scenarios = payload.scenarios;
+        document.getElementById('connection').textContent = 'READY';
+        document.getElementById('connection').className = 'status VERIFIED';
+        renderScenarios();
+      } catch (error) {
+        token = '';
+        sessionStorage.removeItem('demo-token');
+        document.getElementById('connection').textContent = 'TOKEN REQUIRED';
+        document.getElementById('token-dialog').showModal();
+      }
+    }
+
+    function renderScenarios() {
+      document.getElementById('scenario-list').innerHTML = scenarios.map(s => `
+        <div class="scenario ${selected===s.id?'active':''}" data-id="${esc(s.id)}">
+          <div class="severity">${esc(s.severity)}</div><h3>${esc(s.title)}</h3><p>${esc(s.summary)}</p>
+        </div>`).join('');
+      document.querySelectorAll('.scenario').forEach(el => el.onclick = () => { selected = el.dataset.id; renderScenarios(); document.getElementById('start').disabled = false; });
+    }
+
+    document.getElementById('save-token').onclick = () => {
+      token = document.getElementById('token-input').value.trim();
+      sessionStorage.setItem('demo-token', token);
+      document.getElementById('token-dialog').close();
+      loadScenarios();
+    };
+
+    document.getElementById('start').onclick = async () => {
+      document.getElementById('start').disabled = true;
+      const result = await api('/api/workflows', {method:'POST', body: JSON.stringify({scenario_id:selected})});
+      currentWorkflow = result.workflow_id;
+      document.getElementById('placeholder').style.display = 'none';
+      document.getElementById('workflow').classList.add('show');
+      document.getElementById('workflow-id').textContent = currentWorkflow;
+      clearInterval(polling);
+      await refresh();
+      polling = setInterval(refresh, 900);
+    };
+
+    function renderFlow(state) {
+      const current = flowSteps.indexOf(state.step);
+      document.getElementById('flow').innerHTML = flowSteps.map((step, index) => {
+        const done = index < current || (index===current && ['VERIFIED','COMPENSATED','DENIED'].includes(state.status));
+        return `<div class="flow-step ${done?'done':''} ${index===current?'current':''}">${esc(step)}</div>`;
+      }).join('');
+    }
+
+    function renderEvidence(state) {
+      if (!state.evidence) return;
+      const groups = [
+        ['BM25 / exact', state.evidence.lexical],
+        ['Vector / semantic', state.evidence.vector],
+      ];
+      const items = groups.flatMap(([kind, values]) => values.map(item => `
+        <div class="evidence"><div class="kind">${esc(kind)} · ${esc(item.score)}</div><p>${esc(item.text)}</p><small>${esc(item.id)} · ${esc(item.source)}</small></div>`));
+      const graph = state.evidence.graph.map(item => `<div class="evidence"><div class="kind">Graph · ${item.hops} hop</div><p>${item.path.map(edge=>`${esc(edge.from)} → ${esc(edge.relationship)} → ${esc(edge.to)}`).join('<br>')}</p><small>${esc(item.id)}</small></div>`);
+      document.getElementById('evidence').innerHTML = `<div class="evidence-grid">${items.concat(graph).join('')}</div><div class="hash">Evidence manifest: ${esc(state.evidence.manifest_hash)}</div>`;
+      document.getElementById('live').innerHTML = state.evidence.live.map(item => `<div class="live-row"><span>${esc(item.key)}</span><span>${esc(item.value)}</span></div>`).join('');
+    }
+
+    function renderPlan(state) {
+      if (!state.plan) return;
+      const policy = state.policy ? `<div class="callout">Policy: <strong>${esc(state.policy.decision)}</strong><br>${esc(state.policy.obligations.join(' · '))}</div>` : '';
+      const agentTools = (state.plan.agent_tool_calls || []).join(' · ');
+      const agent = state.plan.agent_analysis ? `<div class="callout" style="border-color:var(--purple)"><strong>Bedrock Agent analysis</strong><br>${esc(state.plan.agent_analysis)}<br><br><strong>MCP calls:</strong> ${esc(agentTools)}</div><div style="height:9px"></div>` : '';
+      const approval = state.status === 'AWAITING_APPROVAL' ? `<div class="decision"><button data-decision="true">Approve exact plan</button><button class="danger" data-decision="false">Deny</button></div>` : '';
+      document.getElementById('plan').innerHTML = `
+        ${agent}<pre>${esc(JSON.stringify({tool:state.plan.tool,target:state.plan.target,arguments:state.plan.arguments,risk:state.plan.risk,expected_outcome:state.plan.expected_outcome,rollback:state.plan.rollback,evidence_ids:state.plan.evidence_ids}, null, 2))}</pre>
+        <div class="hash">Plan hash: ${esc(state.plan.plan_hash)}</div>${policy}${approval}`;
+      document.querySelectorAll('[data-decision]').forEach(button => button.onclick = () => decide(button.dataset.decision === 'true', state.plan.plan_hash));
+    }
+
+    function renderOutcome(state) {
+      const parts = [];
+      if (state.execution) parts.push(`<div class="callout" style="border-color:var(--blue)"><strong>Execution receipt</strong><br>${esc(state.execution.tool)} → ${esc(state.execution.target)}<br>Idempotency: ${esc(state.execution.idempotency_key.slice(0,18))}…</div>`);
+      if (state.verification) parts.push(`<div class="callout" style="border-color:${state.verification.passed?'var(--green)':'var(--red)'}"><strong>Verification ${state.verification.passed?'PASSED':'FAILED'}</strong><br>Before: ${esc(JSON.stringify(state.verification.before))}<br>After: ${esc(JSON.stringify(state.verification.after))}</div>`);
+      if (state.compensation) parts.push(`<div class="callout" style="border-color:var(--red)"><strong>Compensated</strong><br>${esc(state.compensation.action)} → ${esc(state.compensation.target)}</div>`);
+      if (parts.length) document.getElementById('outcome').innerHTML = parts.join('<div style="height:9px"></div>');
+    }
+
+    function renderTrace(state) {
+      document.getElementById('trace').innerHTML = (state.trace||[]).slice().reverse().map(item => `<div class="trace-row"><strong>${esc(item.step)}</strong><span>${esc(item.detail)}</span></div>`).join('');
+    }
+
+    async function decide(approved, planHash) {
+      document.querySelectorAll('[data-decision]').forEach(button => button.disabled = true);
+      await api(`/api/workflows/${currentWorkflow}/decision`, {method:'POST', body:JSON.stringify({approved,plan_hash:planHash})});
+      await refresh();
+    }
+
+    async function refresh() {
+      if (!currentWorkflow) return;
+      try {
+        const state = await api(`/api/workflows/${currentWorkflow}`);
+        document.getElementById('run-title').textContent = state.title || 'Starting workflow…';
+        const status = document.getElementById('run-status');
+        status.textContent = state.status;
+        status.className = `status ${state.status}`;
+        renderFlow(state); renderEvidence(state); renderPlan(state); renderOutcome(state); renderTrace(state);
+        if (['VERIFIED','COMPENSATED','DENIED','FAILED'].includes(state.status)) { clearInterval(polling); document.getElementById('start').disabled = false; }
+      } catch (error) { console.error(error); }
+    }
+
+    loadScenarios();
+  </script>
+</body>
+</html>
